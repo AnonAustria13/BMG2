@@ -1,8 +1,15 @@
 package app.utils;
 
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.Set;
 import java.util.regex.Pattern;
+
+/**
+ * @author Daniel Karner
+ * @version 1.0
+ * @since 2019-10-30
+ */
 
 public class HL7Utils {
     /**
@@ -132,6 +139,36 @@ public class HL7Utils {
 
         if (targetClass == Character.class)
             return data.charAt(0);
+
+        if (targetClass == LocalDate.class){
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+            return LocalDate.parse(data.substring(0, 8), formatter);
+        }
+
+        if (targetClass == LocalDate.class) {
+            data = data.replaceAll("\\D", "").replaceAll("(?<=\\d{8}).", "");
+            if(data.length() < 8) 
+                return null;
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+            return LocalDate.parse(data.substring(0, 8), formatter);
+        }
+
+        if (targetClass == LocalDate.class) {
+            data = data.replaceAll("\\D", "").replaceAll("(?<=\\d{8}).", "");
+            if (data.length() < 8)
+                return null;
+            DateTimeFormatter formatter;
+            if (data.length() < 10)
+                formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+            else if (data.length() < 12)
+                formatter = DateTimeFormatter.ofPattern("yyyyMMddhh");
+            else if (data.length() > 14)
+                formatter = DateTimeFormatter.ofPattern("yyyyMMddhhmmss");
+            else
+                formatter = DateTimeFormatter.ofPattern("yyyyMMddhhmm");
+            
+            return LocalDate.parse(data, formatter);
+        }   
         // Fail case
         return null;
     }

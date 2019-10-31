@@ -42,7 +42,6 @@ public class XAD extends HL7Type {
 
     @Override
     public void setParamsToHL7(String HL7String, String delimiter) {
-        System.out.println(HL7String);
         String[] tokens = HL7Utils.tokenizeHL7(HL7String, delimiter, 14);
         this.streetAddress = tokens[0];
         this.otherDesignation = tokens[1];
