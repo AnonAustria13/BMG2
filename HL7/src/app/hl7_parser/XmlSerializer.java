@@ -6,6 +6,7 @@ import java.util.Set;
 
 /**
  * XmlSerializer
+ * @author Thomas Biedermann
  */
 public class XmlSerializer {
     public static String fileOut = "";

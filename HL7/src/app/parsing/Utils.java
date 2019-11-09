@@ -1,7 +1,9 @@
 package app.parsing;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.ParameterizedType;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -55,7 +57,7 @@ public class Utils
 	 * @throws NoSuchMethodException
 	 * @throws SecurityException
 	 */
-	public static Object objectFromMessageLine(String messageLine, String targetId,EncodingCharacters... encodingCharacters) 
+	public static Object objectFromMessageLine(String messageLine, String targetId, EncodingCharacters... encodingCharacters) 
 			throws InstantiationException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException 
 	{
@@ -128,16 +130,14 @@ public class Utils
 		}
 	};
 
-	/**
-	 * @param data
-	 * @param targetClass
-	 * @param encodingCharacters
-	 * @return Creates instance of wanted class representing input String
-	 */
-	public static Object toObject(String data, Class<?> targetClass, EncodingCharacters... encodingCharacters) 
-	{
-		if (data == null || targetClass == null) 
+	public static Object toObject(String data, Class<?> targetClass, EncodingCharacters... encodingCharacters){
+		if (targetClass == null)
 		{
+			return null;
+		}
+
+		if (data == null) {
+			// Check for primitives
 			if (targetClass == Short.class)
 				return (short) 0;
 			if (targetClass == Byte.class)
@@ -152,6 +152,7 @@ public class Utils
 				return (float) 0;
 			if (targetClass == Character.class)
 				return (char) 0;
+			// Else, return null
 			return null;
 		}
 
@@ -218,8 +219,7 @@ public class Utils
 		if (targetClass == Character.class)
 			return data.charAt(0);
 
-		if (targetClass == LocalDate.class) 
-		{
+		if (targetClass == LocalDate.class) {
 			data = data.replaceAll("\\D", "").replaceAll("(?<=\\d{8}).", "");
 			if (data.length() < 8)
 				return null;
@@ -227,8 +227,7 @@ public class Utils
 			return LocalDate.parse(data.substring(0, 8), formatter);
 		}
 
-		if (targetClass == LocalDateTime.class) 
-		{
+		if (targetClass == LocalDateTime.class) {
 			data = data.replaceAll("\\D", "").replaceAll("(?<=\\d{8}).", "");
 			if (data.length() < 8)
 				return null;
@@ -246,13 +245,32 @@ public class Utils
 			return LocalDateTime.parse(data, formatter);
 		}
 
-		if (targetClass == XAD.class) 
-		{
-			if (encodingCharacters == null || encodingCharacters.length < 1) 
+		if (targetClass == XAD.class) {
+			if (encodingCharacters == null || encodingCharacters.length < 1)
 				return new XAD(data, new EncodingCharacters());
 			return new XAD(data, encodingCharacters[0]);
 		}
 		return null;
+	}
+
+	
+	public static Object toObject(String data, Field target, EncodingCharacters encodingCharacters, String... setDelim) 
+	{
+		if (target == null)
+			return null;
+
+		target.setAccessible(true);
+		Class<?> targetClass = target.getClass();	
+
+		if (targetClass == Set.class)
+		{
+			if(setDelim == null || setDelim.length < 1) 
+				return null;
+			ParameterizedType setType = (ParameterizedType) target.getGenericType();
+			Class<?> generic = (Class<?>) setType.getActualTypeArguments()[0];
+			return toSet(data, generic, setDelim[0], encodingCharacters);
+		}
+		return toObject(data, targetClass, encodingCharacters);
 	}
 
 	/**
